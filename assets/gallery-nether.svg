@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" shape-rendering="crispEdges" role="img">
+  <title>Nether hub built from blackstone above a lava lake</title>
+  <defs>
+    <linearGradient id="nsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a0d10"/>
+      <stop offset="0.6" stop-color="#45140f"/>
+      <stop offset="1" stop-color="#66200d"/>
+    </linearGradient>
+    <radialGradient id="pglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#nsky)"/>
+
+  <!-- heat haze -->
+  <g fill="#ff7a18" opacity="0.12">
+    <rect x="0" y="380" width="800" height="30"/>
+    <rect x="0" y="420" width="800" height="20"/>
+  </g>
+
+  <!-- lava lake -->
+  <rect x="0" y="500" width="800" height="100" fill="#ff7a18"/>
+  <g fill="#ffb020">
+    <rect x="40" y="520" width="160" height="20"/>
+    <rect x="600" y="530" width="140" height="18"/>
+    <rect x="300" y="570" width="200" height="16"/>
+  </g>
+  <rect x="330" y="550" width="140" height="14" fill="#ffd35a" opacity="0.85"/>
+
+  <!-- floor -->
+  <rect x="0" y="440" width="800" height="60" fill="#1c1c22"/>
+  <rect x="0" y="440" width="800" height="8" fill="#34343f"/>
+
+  <!-- pillars -->
+  <g fill="#2b2b34">
+    <rect x="120" y="180" width="60" height="260"/>
+    <rect x="620" y="180" width="60" height="260"/>
+  </g>
+  <g fill="#43434f">
+    <rect x="120" y="180" width="60" height="10"/>
+    <rect x="620" y="180" width="60" height="10"/>
+  </g>
+
+  <!-- lintel -->
+  <rect x="100" y="140" width="600" height="50" fill="#26262e"/>
+  <g fill="#3a3a46">
+    <rect x="160" y="140" width="6" height="50"/>
+    <rect x="280" y="140" width="6" height="50"/>
+    <rect x="520" y="140" width="6" height="50"/>
+    <rect x="640" y="140" width="6" height="50"/>
+    <rect x="100" y="140" width="600" height="8"/>
+  </g>
+
+  <!-- portal glow -->
+  <ellipse cx="400" cy="320" rx="230" ry="200" fill="url(#pglow)"/>
+
+  <!-- portal frame -->
+  <rect x="288" y="184" width="224" height="272" fill="#3a3a46"/>
+  <rect x="300" y="200" width="200" height="240" fill="#7c3aed"/>
+  <g fill="#a855f7">
+    <rect x="320" y="230" width="160" height="30" opacity="0.75"/>
+    <rect x="315" y="400" width="170" height="24" opacity="0.55"/>
+  </g>
+  <rect x="336" y="310" width="130" height="26" fill="#c084fc" opacity="0.7"/>
+
+  <!-- braziers -->
+  <g>
+    <rect x="150" y="410" width="40" height="30" fill="#3a3a46"/>
+    <rect x="152" y="386" width="36" height="26" fill="#ff9d1f"/>
+    <rect x="158" y="374" width="24" height="18" fill="#ffd35a"/>
+    <rect x="610" y="410" width="40" height="30" fill="#3a3a46"/>
+    <rect x="612" y="386" width="36" height="26" fill="#ff9d1f"/>
+    <rect x="618" y="374" width="24" height="18" fill="#ffd35a"/>
+  </g>
+
+  <!-- steps -->
+  <rect x="330" y="424" width="140" height="16" fill="#43434f"/>
+  <rect x="310" y="440" width="180" height="14" fill="#34343f"/>
+</svg>

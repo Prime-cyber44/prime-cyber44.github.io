@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" shape-rendering="crispEdges" role="img">
+  <title>Harbor of Keys with docks, cranes and moored ships</title>
+  <defs>
+    <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#86c5e8"/>
+      <stop offset="1" stop-color="#d9eefb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#hsky)"/>
+
+  <rect x="120" y="90" width="70" height="70" fill="#fff4c4"/>
+
+  <g fill="#ffffff">
+    <rect x="300" y="80" width="200" height="40" opacity="0.85"/>
+    <rect x="350" y="40" width="110" height="40" opacity="0.85"/>
+    <rect x="60" y="160" width="150" height="36" opacity="0.7"/>
+    <rect x="620" y="130" width="140" height="36" opacity="0.7"/>
+  </g>
+
+  <!-- distant shore -->
+  <g fill="#7ba8b8">
+    <rect x="0" y="360" width="300" height="40"/>
+    <rect x="540" y="344" width="260" height="56"/>
+    <rect x="80" y="330" width="120" height="30"/>
+  </g>
+
+  <!-- water -->
+  <rect x="0" y="400" width="800" height="200" fill="#2f7fbf"/>
+  <g fill="#5fb0e0">
+    <rect x="40" y="430" width="120" height="8"/>
+    <rect x="360" y="446" width="90" height="8"/>
+    <rect x="620" y="424" width="140" height="8"/>
+    <rect x="140" y="480" width="110" height="8"/>
+    <rect x="520" y="492" width="130" height="8"/>
+    <rect x="300" y="536" width="150" height="8"/>
+    <rect x="660" y="548" width="100" height="8"/>
+    <rect x="40" y="566" width="90" height="8"/>
+  </g>
+
+  <!-- dock -->
+  <rect x="120" y="430" width="420" height="30" fill="#8a6a44"/>
+  <rect x="120" y="438" width="420" height="4" fill="#6b4526"/>
+  <rect x="120" y="448" width="420" height="4" fill="#6b4526"/>
+  <rect x="140" y="460" width="24" height="60" fill="#5d3a21"/>
+  <rect x="300" y="460" width="24" height="60" fill="#5d3a21"/>
+  <rect x="460" y="460" width="24" height="60" fill="#5d3a21"/>
+
+  <!-- crates -->
+  <rect x="200" y="400" width="40" height="30" fill="#a5764a"/>
+  <rect x="200" y="412" width="40" height="4" fill="#7d5535"/>
+  <rect x="246" y="406" width="30" height="24" fill="#8a5a3a"/>
+  <rect x="246" y="415" width="30" height="4" fill="#6b4526"/>
+
+  <!-- ship -->
+  <rect x="530" y="220" width="14" height="160" fill="#4a3a20"/>
+  <rect x="470" y="230" width="60" height="130" fill="#f0ead8"/>
+  <rect x="544" y="250" width="70" height="110" fill="#d94f4f"/>
+  <rect x="544" y="220" width="44" height="24" fill="#4ade80"/>
+  <rect x="430" y="380" width="250" height="50" fill="#6b4526"/>
+  <rect x="440" y="430" width="230" height="28" fill="#553619"/>
+  <rect x="660" y="392" width="40" height="30" fill="#6b4526"/>
+  <rect x="470" y="392" width="30" height="26" fill="#8a5a3a"/>
+
+  <!-- dock lamp -->
+  <rect x="486" y="368" width="10" height="62" fill="#4a3a20"/>
+  <rect x="478" y="352" width="26" height="24" fill="#ffd35a"/>
+</svg>
