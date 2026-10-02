@@ -2,10 +2,10 @@
 <html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>StormMC — Java + Bedrock survival, v26.2</title>
   <meta name="description" content="StormMC is a Java and Bedrock survival realm on Minecraft 26.2. Copy the IP, watch live status, vote for rewards, read the rules, and join the Discord. Launching soon.">
-  <meta name="theme-color" content="#0a0e13">
+  <meta name="theme-color" content="#070b10">
   <meta property="og:title" content="StormMC — Survive the storm. Rule what's left.">
   <meta property="og:description" content="Java + Bedrock survival on 26.2. Server-wide storms, player economy, raid weekends. play.stormmc.top">
   <meta property="og:type" content="website">
@@ -22,10 +22,38 @@
 
   <!-- Material Web components (free, Apache-2.0) — bundled locally so the site works offline -->
   <script src="vendor/material.js" defer></script>
+  <!-- Three.js (MIT) — bundled locally: full WebGL voxel world, works from file:// -->
+  <script src="vendor/three.bundle.js" defer></script>
+  <script src="storm3d.js" defer></script>
 </head>
 
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ============================== 3D WORLD ============================== -->
+  <div class="stage" aria-hidden="true">
+    <canvas id="storm-canvas"></canvas>
+    <div class="stage-fx"></div>
+    <div class="stage-scan"></div>
+  </div>
+
+  <!-- Loading veil -->
+  <div class="loader" id="loader" role="status" aria-live="polite">
+    <div class="loader-inner">
+      <div class="loader-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="56" height="56" shape-rendering="crispEdges">
+          <rect x="2" y="4" width="28" height="24" fill="#0d1420"/>
+          <rect x="14" y="7" width="5" height="12" fill="#fde047"/>
+          <rect x="10" y="15" width="5" height="5" fill="#fde047"/>
+          <rect x="17" y="18" width="5" height="7" fill="#4ade80"/>
+          <rect x="6" y="25" width="20" height="3" fill="#7dd3fc"/>
+        </svg>
+      </div>
+      <p class="loader-title">STORM<em>MC</em></p>
+      <div class="loader-bar" aria-hidden="true"><span id="loader-fill"></span></div>
+      <p class="loader-note" id="loader-note">Forging the storm&hellip;</p>
+    </div>
+  </div>
 
   <!-- ============================== TOP APP BAR ============================== -->
   <header class="topbar" id="topbar">
@@ -56,6 +84,7 @@
         </md-icon-button>
       </div>
     </div>
+    <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
   </header>
 
   <!-- Mobile drawer -->
@@ -81,16 +110,61 @@
     <a class="btn btn-outlined" href="https://discord.gg/ET9gd94Sx" data-discord target="_blank" rel="noopener">Join the Discord</a>
   </nav>
 
+  <!-- ============================== STORM DECK (3D controls) ============================== -->
+  <aside class="deck" id="deck" aria-label="Storm controls">
+    <button class="deck-toggle" id="deck-toggle" type="button" aria-expanded="true" aria-controls="deck-body" aria-label="Toggle storm controls">
+      <md-icon>tune</md-icon>
+    </button>
+    <div class="deck-body" id="deck-body">
+      <p class="deck-title">Storm controls</p>
+
+      <label class="deck-row deck-row-range">
+        <span class="deck-label">Intensity</span>
+        <input type="range" id="storm-range" min="0" max="100" value="58" aria-label="Storm intensity">
+        <output id="storm-out" for="storm-range">58%</output>
+      </label>
+
+      <div class="deck-grid">
+        <button class="deck-btn" id="btn-weather" type="button" aria-pressed="false">
+          <md-icon id="weather-icon">dark_mode</md-icon><span id="weather-label">Night</span>
+        </button>
+        <button class="deck-btn" id="btn-strike" type="button">
+          <md-icon>bolt</md-icon><span>Strike</span>
+        </button>
+        <button class="deck-btn" id="btn-view" type="button">
+          <md-icon>center_focus_strong</md-icon><span>Recenter</span>
+        </button>
+        <button class="deck-btn" id="btn-sound" type="button" aria-pressed="false">
+          <md-icon id="sound-icon">volume_off</md-icon><span id="sound-label">Sound</span>
+        </button>
+      </div>
+
+      <label class="deck-switch">
+        <input type="checkbox" id="motion-toggle">
+        <span class="deck-switch-track" aria-hidden="true"><span></span></span>
+        <span class="deck-switch-label">Reduce motion</span>
+      </label>
+
+      <p class="deck-hint">Drag to look &middot; click a block to mine it &middot; scroll to fly</p>
+    </div>
+  </aside>
+
+  <!-- ============================== HUD ============================== -->
+  <div class="hud" id="hud" aria-hidden="true">
+    <div class="hud-cell"><span class="hud-k">Blocks mined</span><strong id="hud-blocks">0</strong></div>
+    <div class="hud-cell"><span class="hud-k">Players</span><strong id="hud-players">—</strong></div>
+    <div class="hud-cell"><span class="hud-k">Bolts cast</span><strong id="hud-lightning">0</strong></div>
+  </div>
+
   <main id="main">
     <!-- ================================ HERO ================================ -->
-    <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="hero-bg" aria-hidden="true"></div>
-
-      <div class="hero-grid shell">
+    <section class="scene scene-hero" id="top" data-scene="hero" aria-labelledby="hero-title">
+      <div class="scene-inner shell">
+        <div class="hero-grid">
         <div class="hero-copy">
           <p class="hero-chips reveal" style="--i:0">
             <span class="pill pill-soon"><span class="pill-dot" aria-hidden="true"></span>Launching soon</span>
-            <span class="pill">Java + Bedrock · v26.2</span>
+            <span class="pill">Java + Bedrock &middot; v26.2</span>
           </p>
 
           <h1 class="hero-title reveal" id="hero-title" style="--i:1">
@@ -99,7 +173,7 @@
           </h1>
 
           <p class="hero-lede reveal" style="--i:2">
-            StormMC is a survival realm on Minecraft <strong>26.2</strong> — one world for Java and Bedrock,
+            StormMC is a survival realm on Minecraft <strong>26.2</strong> &mdash; one world for Java and Bedrock,
             a player-run economy, and weather events that hit the whole server at once.
           </p>
 
@@ -120,95 +194,19 @@
           </div>
         </div>
 
-        <div class="hero-visual reveal" style="--i:2">
-          <!-- Pixel storm scene: floating island, tower, lightning -->
-          <svg class="hero-art" viewBox="0 0 640 520" role="img" aria-label="Pixel-art floating island with a tower under a lightning storm" shape-rendering="crispEdges">
-            <defs>
-              <linearGradient id="skyGlow" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#123047" stop-opacity=".9"/>
-                <stop offset="100%" stop-color="#0a0e13" stop-opacity="0"/>
-              </linearGradient>
-              <filter id="boltGlow" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="10" result="b"/>
-                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-
-            <ellipse cx="330" cy="300" rx="300" ry="220" fill="url(#skyGlow)"/>
-
-            <!-- clouds -->
-            <g class="cloud cloud-a">
-              <rect x="40" y="52" width="200" height="40" fill="#1c2836"/>
-              <rect x="80" y="20" width="120" height="36" fill="#243344"/>
-              <rect x="200" y="60" width="60" height="32" fill="#161f2b"/>
-            </g>
-            <g class="cloud cloud-b">
-              <rect x="430" y="96" width="170" height="40" fill="#1c2836"/>
-              <rect x="470" y="64" width="100" height="36" fill="#243344"/>
-              <rect x="410" y="104" width="50" height="32" fill="#161f2b"/>
-            </g>
-
-            <!-- lightning bolt (Material "bolt" glyph, scaled) -->
-            <g class="bolt" filter="url(#boltGlow)" transform="translate(398 74) scale(7.6)">
-              <path fill="#fde047" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/>
-            </g>
-
-            <!-- rain -->
-            <g class="rain" fill="#5aa9ff" opacity=".5">
-              <rect x="70" y="180" width="4" height="26" style="--d:0s"/>
-              <rect x="150" y="230" width="4" height="26" style="--d:.7s"/>
-              <rect x="230" y="160" width="4" height="26" style="--d:1.3s"/>
-              <rect x="330" y="240" width="4" height="26" style="--d:.3s"/>
-              <rect x="470" y="200" width="4" height="26" style="--d:1s"/>
-              <rect x="560" y="250" width="4" height="26" style="--d:1.7s"/>
-              <rect x="520" y="150" width="4" height="26" style="--d:.5s"/>
-            </g>
-
-            <!-- floating voxel island -->
-            <g class="island">
-              <!-- plateau grass -->
-              <rect x="240" y="200" width="160" height="40" fill="#4ade80"/>
-              <!-- main grass shelf -->
-              <rect x="120" y="240" width="400" height="40" fill="#4ade80"/>
-              <rect x="120" y="276" width="400" height="8" fill="#2ea35d"/>
-              <!-- dirt -->
-              <rect x="160" y="284" width="320" height="40" fill="#8a5a34"/>
-              <rect x="200" y="324" width="240" height="40" fill="#75492a"/>
-              <rect x="240" y="364" width="160" height="40" fill="#8a5a34"/>
-              <rect x="280" y="404" width="80" height="40" fill="#75492a"/>
-              <rect x="300" y="444" width="40" height="36" fill="#5d3a21"/>
-
-              <!-- tower -->
-              <rect x="280" y="120" width="80" height="40" fill="#e05252"/>
-              <rect x="272" y="152" width="96" height="12" fill="#b23c3c"/>
-              <rect x="288" y="164" width="64" height="36" fill="#8d97a3"/>
-              <rect x="300" y="176" width="16" height="16" fill="#0a0e13"/>
-              <!-- tower base sits on plateau -->
-              <rect x="292" y="212" width="16" height="16" fill="#7b848f" transform="translate(0 -12)"/>
-
-              <!-- trees -->
-              <rect x="156" y="212" width="44" height="32" fill="#2f9e58"/>
-              <rect x="148" y="232" width="60" height="20" fill="#26834a"/>
-              <rect x="170" y="252" width="16" height="28" fill="#6b4526"/>
-              <rect x="444" y="224" width="40" height="28" fill="#2f9e58"/>
-              <rect x="436" y="244" width="56" height="18" fill="#26834a"/>
-              <rect x="456" y="262" width="16" height="20" fill="#6b4526"/>
-            </g>
-          </svg>
-
-          <!-- Live status card -->
-          <div class="status-card" id="status" aria-labelledby="status-title">
+        <!-- Live status card -->
+        <div class="status-card reveal" id="status" style="--i:5" aria-labelledby="status-title">
             <div class="status-head">
               <span class="status-dot is-checking" data-status-dot aria-hidden="true"></span>
-              <h2 class="status-title" id="status-title" data-status-label>Checking server…</h2>
+              <h2 class="status-title" id="status-title" data-status-label>Checking server&hellip;</h2>
               <md-icon-button class="status-refresh" data-refresh aria-label="Refresh server status">
                 <md-icon>refresh</md-icon>
               </md-icon-button>
             </div>
 
             <p class="status-count" aria-live="polite">
-              <span class="status-num" data-players-online>—</span>
-              <span class="status-max">/ <span data-players-max>—</span></span>
+              <span class="status-num" data-players-online>&mdash;</span>
+              <span class="status-max">/ <span data-players-max>&mdash;</span></span>
             </p>
             <p class="status-count-label">players online</p>
 
@@ -227,17 +225,15 @@
               </div>
             </dl>
 
-            <p class="status-foot"><span data-last-checked>not checked yet</span> · refreshes every 60&nbsp;s</p>
+            <p class="status-foot"><span data-last-checked>not checked yet</span> &middot; refreshes every 60&nbsp;s</p>
           </div>
         </div>
       </div>
-
-      <div class="pixel-edge pixel-edge-hero" aria-hidden="true"></div>
     </section>
 
     <!-- ================================ MODES ================================ -->
-    <section class="section" id="modes" aria-labelledby="modes-title">
-      <div class="shell">
+    <section class="scene" id="modes" data-scene="modes" aria-labelledby="modes-title">
+      <div class="scene-inner shell">
         <header class="section-head reveal">
           <p class="eyebrow">What you&rsquo;re joining</p>
           <h2 class="section-title" id="modes-title">Built for players who like it loud.</h2>
@@ -257,7 +253,7 @@
               <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
             </span>
             <h3 class="feature-title">Server-wide storms</h3>
-            <p class="feature-text">Weather events roll across every dimension at once — blackout nights, lightning raids, and loot surges for anyone brave enough to stand outside.</p>
+            <p class="feature-text">Weather events roll across every dimension at once &mdash; blackout nights, lightning raids, and loot surges for anyone brave enough to stand outside.</p>
           </article>
 
           <article class="feature-card reveal" style="--i:2">
@@ -265,7 +261,7 @@
               <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M4 6h16v10H4V6m16-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7v2H8v2h8v-2h-3v-2h7a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/></svg>
             </span>
             <h3 class="feature-title">Java + Bedrock, one world</h3>
-            <p class="feature-text">Crossplay from day one. PC, console, and phone all land in the same 26.2 spawn — same chunks, same economy, same storms.</p>
+            <p class="feature-text">Crossplay from day one. PC, console, and phone all land in the same 26.2 spawn &mdash; same chunks, same economy, same storms.</p>
           </article>
 
           <article class="feature-card reveal" style="--i:3">
@@ -273,20 +269,20 @@
               <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M17 12h-5v5h5v-5ZM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2Zm3 18H5V8h14v11Z"/></svg>
             </span>
             <h3 class="feature-title">Raid weekends</h3>
-            <p class="feature-text">Every Friday the truce drops for 48 hours. Build high, hide well, and defend everything you mined — or don&rsquo;t.</p>
+            <p class="feature-text">Every Friday the truce drops for 48 hours. Build high, hide well, and defend everything you mined &mdash; or don&rsquo;t.</p>
           </article>
         </div>
       </div>
     </section>
 
     <!-- ================================ VOTE ================================ -->
-    <section class="section section-alt" id="vote" aria-labelledby="vote-title">
-      <div class="shell">
+    <section class="scene" id="vote" data-scene="vote" aria-labelledby="vote-title">
+      <div class="scene-inner shell">
         <header class="section-head reveal">
           <p class="eyebrow">Daily rewards</p>
           <h2 class="section-title" id="vote-title">Vote while the servers warm up.</h2>
           <p class="section-lede">
-            Every listing goes live at launch. Rewards are credited in-game the moment each site flips on —
+            Every listing goes live at launch. Rewards are credited in-game the moment each site flips on &mdash;
             follow the reset clocks so you never miss one.
           </p>
         </header>
@@ -335,18 +331,18 @@
         </div>
 
         <p class="section-note reveal">
-          Voting rewards are tied to your Minecraft name — the same account you join with is the one that gets paid.
+          Voting rewards are tied to your Minecraft name &mdash; the same account you join with is the one that gets paid.
         </p>
       </div>
     </section>
 
     <!-- =============================== RULES / FAQ =============================== -->
-    <section class="section" id="rules" aria-labelledby="rules-title">
-      <div class="shell shell-narrow">
+    <section class="scene" id="rules" data-scene="rules" aria-labelledby="rules-title">
+      <div class="scene-inner shell shell-narrow">
         <header class="section-head reveal">
           <p class="eyebrow">House rules</p>
           <h2 class="section-title" id="rules-title">Short list. Strictly enforced.</h2>
-          <p class="section-lede">Read this before you join — appeals happen in Discord, never in chat.</p>
+          <p class="section-lede">Read this before you join &mdash; appeals happen in Discord, never in chat.</p>
         </header>
 
         <div class="panel-switch reveal" role="group" aria-label="Choose rules or frequently asked questions">
@@ -364,18 +360,18 @@
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-r1" role="region">
-                <div class="acc-inner"><p>Any client modification that reveals ores, aims, or clicks for you is a permanent removal — no warnings, no refunds on ranks.</p></div>
+                <div class="acc-inner"><p>Any client modification that reveals ores, aims, or clicks for you is a permanent removal &mdash; no warnings, no refunds on ranks.</p></div>
               </div>
             </div>
 
             <div class="acc-item">
               <h3><button class="acc-trigger" type="button" aria-expanded="false" aria-controls="acc-r2">
                 <span class="rule-num" aria-hidden="true">02</span>
-                <span class="acc-label">Griefing is a sport — claims are the line</span>
+                <span class="acc-label">Griefing is a sport &mdash; claims are the line</span>
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-r2" role="region">
-                <div class="acc-inner"><p>Unclaimed land is fair game at any hour. Inside a claim it&rsquo;s a ban — raid weekend or not.</p></div>
+                <div class="acc-inner"><p>Unclaimed land is fair game at any hour. Inside a claim it&rsquo;s a ban &mdash; raid weekend or not.</p></div>
               </div>
             </div>
 
@@ -456,7 +452,7 @@
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-f1" role="region">
-                <div class="acc-inner"><p>We&rsquo;re in final testing on 26.2. The Discord gets the go-live ping first — usually a day before the lists update.</p></div>
+                <div class="acc-inner"><p>We&rsquo;re in final testing on 26.2. The Discord gets the go-live ping first &mdash; usually a day before the lists update.</p></div>
               </div>
             </div>
 
@@ -466,7 +462,7 @@
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-f2" role="region">
-                <div class="acc-inner"><p>Both. One address, <code class="mono" data-ip>play.stormmc.top</code>, works from either edition — crossplay is handled server-side.</p></div>
+                <div class="acc-inner"><p>Both. One address, <code class="mono" data-ip>play.stormmc.top</code>, works from either edition &mdash; crossplay is handled server-side.</p></div>
               </div>
             </div>
 
@@ -476,7 +472,7 @@
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-f3" role="region">
-                <div class="acc-inner"><p>No. Ranks, cosmetics, and convenience only — nothing you can buy that you can&rsquo;t earn by playing.</p></div>
+                <div class="acc-inner"><p>No. Ranks, cosmetics, and convenience only &mdash; nothing you can buy that you can&rsquo;t earn by playing.</p></div>
               </div>
             </div>
 
@@ -486,7 +482,7 @@
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-f4" role="region">
-                <div class="acc-inner"><p>1× vanilla survival. The extra loot lives in storm events, crates, and the nether — not in a boosted mine.</p></div>
+                <div class="acc-inner"><p>1&times; vanilla survival. The extra loot lives in storm events, crates, and the nether &mdash; not in a boosted mine.</p></div>
               </div>
             </div>
 
@@ -502,7 +498,7 @@
 
             <div class="acc-item">
               <h3><button class="acc-trigger" type="button" aria-expanded="false" aria-controls="acc-f6">
-                <span class="acc-label">I lost items in a rollback — can I get them back?</span>
+                <span class="acc-label">I lost items in a rollback &mdash; can I get them back?</span>
                 <svg class="acc-chevron" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6 1.4-1.4Z"/></svg>
               </button></h3>
               <div class="acc-panel" id="acc-f6" role="region">
@@ -515,8 +511,8 @@
     </section>
 
     <!-- =============================== GALLERY =============================== -->
-    <section class="section section-alt" id="gallery" aria-labelledby="gallery-title">
-      <div class="shell">
+    <section class="scene" id="gallery" data-scene="gallery" aria-labelledby="gallery-title">
+      <div class="scene-inner shell">
         <header class="section-head reveal">
           <p class="eyebrow">The world</p>
           <h2 class="section-title" id="gallery-title">Spawn, builds, and bad weather.</h2>
@@ -568,13 +564,13 @@
           </li>
         </ul>
 
-        <p class="section-note reveal" id="gallery-empty" hidden>Nothing in that category yet — check back after launch.</p>
+        <p class="section-note reveal" id="gallery-empty" hidden>Nothing in that category yet &mdash; check back after launch.</p>
       </div>
     </section>
 
     <!-- ============================== COMMUNITY ============================== -->
-    <section class="section" id="community" aria-labelledby="community-title">
-      <div class="shell">
+    <section class="scene" id="community" data-scene="community" aria-labelledby="community-title">
+      <div class="scene-inner shell">
         <header class="section-head reveal">
           <p class="eyebrow">Community</p>
           <h2 class="section-title" id="community-title">Everything happens in the Discord.</h2>
@@ -588,7 +584,7 @@
             </span>
             <span class="link-body">
               <span class="link-title">Discord</span>
-              <span class="link-desc">Open now — the launch ping lands here before anywhere else.</span>
+              <span class="link-desc">Open now &mdash; the launch ping lands here before anywhere else.</span>
             </span>
             <span class="link-cta">Join<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8.6 7.4 13.2 12l-4.6 4.6L10 18l6-6-6-6-1.4 1.4Z"/></svg></span>
           </a>
@@ -633,7 +629,6 @@
 
   <!-- ================================ FOOTER ================================ -->
   <footer class="footer">
-    <div class="pixel-edge pixel-edge-footer" aria-hidden="true"></div>
     <div class="shell footer-grid">
       <div class="footer-brand">
         <a class="brand" href="#top">
@@ -672,15 +667,15 @@
       <div class="footer-col">
         <h2 class="footer-head">Status</h2>
         <ul class="footer-status">
-          <li><span class="status-dot is-checking" data-status-dot aria-hidden="true"></span><span data-status-label>Checking…</span></li>
+          <li><span class="status-dot is-checking" data-status-dot aria-hidden="true"></span><span data-status-label>Checking&hellip;</span></li>
           <li class="mono" data-ip>play.stormmc.top</li>
         </ul>
       </div>
     </div>
 
     <div class="shell footer-legal">
-      <p>© <span data-year>2026</span> StormMC. Not an official Minecraft product — not approved by or associated with Mojang Studios or Microsoft.</p>
-      <p class="footer-made">Built with free &amp; open tools: Material Design Web components, no frameworks, no trackers.</p>
+      <p>&copy; <span data-year>2026</span> StormMC. Not an official Minecraft product &mdash; not approved by or associated with Mojang Studios or Microsoft.</p>
+      <p class="footer-made">Built with free &amp; open tools: Three.js, Material Design Web, no frameworks, no trackers.</p>
     </div>
   </footer>
 

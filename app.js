@@ -135,24 +135,37 @@
     })(start);
   }
 
+  function announceStatus(state, online, max) {
+    try {
+      window.dispatchEvent(new CustomEvent('storm:status', {
+        detail: { state: state, online: online, max: max }
+      }));
+    } catch (e) { /* CustomEvent unsupported — ignore */ }
+  }
+
   function renderStatus(data, failed) {
     if (failed) {
       setStatus('offline', 'Status unavailable');
       if (statusEls.online) statusEls.online.textContent = '—';
       if (statusEls.max) statusEls.max.textContent = '—';
+      announceStatus('unavailable', null, null);
       return;
     }
     if (data && data.online) {
       setStatus('online', 'Server online');
       var p = data.players || {};
-      animateNumber(statusEls.online, typeof p.online === 'number' ? p.online : 0, false);
-      if (statusEls.max) statusEls.max.textContent = typeof p.max === 'number' ? String(p.max) : '?';
+      var online = typeof p.online === 'number' ? p.online : 0;
+      var max = typeof p.max === 'number' ? p.max : null;
+      animateNumber(statusEls.online, online, false);
+      if (statusEls.max) statusEls.max.textContent = max == null ? '?' : String(max);
       if (statusEls.version && data.version) statusEls.version.textContent = data.version;
+      announceStatus('online', online, max);
     } else {
       setStatus('offline', 'Offline · pre-launch');
       if (statusEls.online) statusEls.online.textContent = '0';
       if (statusEls.max) statusEls.max.textContent = '—';
       if (statusEls.online) statusEls.online.classList.add('is-off');
+      announceStatus('offline', 0, null);
     }
   }
 
