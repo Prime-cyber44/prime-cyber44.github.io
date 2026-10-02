@@ -1426,9 +1426,6 @@
     get triangles() { return renderer.info.render.triangles; },
     get camera() { return [camera.position.x, camera.position.y, camera.position.z]; },
     strike: strike,
-    mine: function () { return blockCount; },
-    _dbg: function () {
-      return { THREE: T, renderer: renderer, scene: scene, camera: camera, composer: composer, breakables: breakables, mats: mats, clouds: clouds, rain: rain, bolts: bolts };
-    }
+    mine: function () { return blockCount; }
   };
 })();
